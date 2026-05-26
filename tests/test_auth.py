@@ -311,11 +311,10 @@ def test_check_token_authentication_success(mocker, mock_post):
 
 def test_start_device_login_with_new_parameters(mock_post, mocker):
     """Test start_device_login with team scoping and expiration parameters"""
-    mock_post_obj = mock_post("requests.post", [
-        (200, MOCK_RESPONSE),
-        (200, MOCK_RESPONSE),
-        (200, MOCK_RESPONSE)
-    ])
+    mock_post_obj = mock_post(
+        "requests.post",
+        [(200, MOCK_RESPONSE), (200, MOCK_RESPONSE), (200, MOCK_RESPONSE)],
+    )
 
     start_device_login(client_name="test", team_names=["team1"], expires_in_days=30)
     start_device_login(client_name="test", team_ids=[1, 2], never_expires=True)
@@ -324,7 +323,11 @@ def test_start_device_login_with_new_parameters(mock_post, mocker):
     assert mock_post_obj.call_args_list == [
         mocker.call(
             url="https://studio.datachain.ai/api/device-login",
-            json={"client_name": "test", "team_names": ["team1"], "expires_in_days": 30},
+            json={
+                "client_name": "test",
+                "team_names": ["team1"],
+                "expires_in_days": 30,
+            },
             headers={"Content-type": "application/json"},
             timeout=5,
         ),
@@ -350,7 +353,9 @@ def test_get_access_token_parameter_passthrough(mocker, mock_post):
     mock_login_post = mock_post("requests.post", [(200, MOCK_RESPONSE)])
     mock_post("requests.Session.post", [(200, {"access_token": "token"})])
 
-    get_access_token(hostname="https://example.com", team_names=["team1"], expires_in_days=7)
+    get_access_token(
+        hostname="https://example.com", team_names=["team1"], expires_in_days=7
+    )
 
     assert mock_login_post.call_args == mocker.call(
         url="https://example.com/api/device-login",
@@ -367,7 +372,9 @@ def test_backwards_compatibility(mocker, mock_post):
     mock_login_post = mock_post("requests.post", [(200, MOCK_RESPONSE)])
     mock_post("requests.Session.post", [(200, {"access_token": "token"})])
 
-    token_name, access_token = get_access_token(hostname="https://example.com", scopes="experiments")
+    token_name, access_token = get_access_token(
+        hostname="https://example.com", scopes="experiments"
+    )
 
     assert (token_name, access_token) == ("random-name", "token")
     assert mock_login_post.call_args == mocker.call(
