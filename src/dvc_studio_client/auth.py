@@ -42,7 +42,6 @@ def get_access_token(  # noqa: PLR0913
     use_device_code: bool = False,
     # Team scoping parameters
     team_names: Optional[list[str]] = None,
-    team_ids: Optional[list[int]] = None,
     all_teams: Optional[bool] = None,
     # Expiration parameters
     expires_in_days: Optional[int] = None,
@@ -65,7 +64,6 @@ def get_access_token(  # noqa: PLR0913
 
     Team Scoping Parameters:
         team_names (list[str], optional): List of team names to scope the token to.
-        team_ids (list[int], optional): List of team IDs to scope the token to.
         all_teams (bool, optional): Grant access to all teams.
 
     Expiration Parameters:
@@ -91,7 +89,6 @@ def get_access_token(  # noqa: PLR0913
         token_name=token_name,
         scopes=scopes.split(",") if scopes else [],
         team_names=team_names,
-        team_ids=team_ids,
         all_teams=all_teams,
         expires_in_days=expires_in_days,
         never_expires=never_expires,
@@ -132,7 +129,6 @@ def start_device_login(  # noqa: PLR0913
     scopes: Optional[list[str]] = None,
     # Team scoping parameters
     team_names: Optional[list[str]] = None,
-    team_ids: Optional[list[int]] = None,
     all_teams: Optional[bool] = None,
     # Expiration parameters
     expires_in_days: Optional[int] = None,
@@ -152,7 +148,6 @@ def start_device_login(  # noqa: PLR0913
 
     Team Scoping Parameters:
     - team_names: A list of team names to scope the token to.
-    - team_ids: A list of team IDs to scope the token to.
     - all_teams: Grant access to all teams.
 
     Expiration Parameters:
@@ -182,6 +177,12 @@ def start_device_login(  # noqa: PLR0913
                 f"Following scopes are not valid: {', '.join(invalid_scopes)}",
             )
 
+    # Validate team access parameters
+    if all_teams is False and not team_names:
+        raise ValueError(  # noqa: TRY003
+            "team_names must be specified when all_teams is False"
+        )
+
     body: dict[str, Any] = {"client_name": client_name}
 
     if token_name:
@@ -193,8 +194,6 @@ def start_device_login(  # noqa: PLR0913
     # Add team scoping parameters
     if team_names:
         body["team_names"] = team_names
-    if team_ids:
-        body["team_ids"] = team_ids
     if all_teams is not None:
         body["all_teams"] = all_teams
 

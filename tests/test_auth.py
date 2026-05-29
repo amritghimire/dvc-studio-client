@@ -313,12 +313,11 @@ def test_start_device_login_with_new_parameters(mock_post, mocker):
     """Test start_device_login with team scoping and expiration parameters"""
     mock_post_obj = mock_post(
         "requests.post",
-        [(200, MOCK_RESPONSE), (200, MOCK_RESPONSE), (200, MOCK_RESPONSE)],
+        [(200, MOCK_RESPONSE), (200, MOCK_RESPONSE)],
     )
 
     start_device_login(client_name="test", team_names=["team1"], expires_in_days=30)
-    start_device_login(client_name="test", team_ids=[1, 2], never_expires=True)
-    start_device_login(client_name="test", all_teams=False)
+    start_device_login(client_name="test", all_teams=False, team_names=["team1"])
 
     assert mock_post_obj.call_args_list == [
         mocker.call(
@@ -333,13 +332,7 @@ def test_start_device_login_with_new_parameters(mock_post, mocker):
         ),
         mocker.call(
             url="https://studio.datachain.ai/api/device-login",
-            json={"client_name": "test", "team_ids": [1, 2], "never_expires": True},
-            headers={"Content-type": "application/json"},
-            timeout=5,
-        ),
-        mocker.call(
-            url="https://studio.datachain.ai/api/device-login",
-            json={"client_name": "test", "all_teams": False},
+            json={"client_name": "test", "all_teams": False, "team_names": ["team1"]},
             headers={"Content-type": "application/json"},
             timeout=5,
         ),
@@ -383,3 +376,22 @@ def test_backwards_compatibility(mocker, mock_post):
         headers={"Content-type": "application/json"},
         timeout=5,
     )
+
+
+def test_start_device_login_validation_all_teams_false_without_team_names():
+    """Test validation error when all_teams=False but team_names not provided"""
+    with pytest.raises(
+        ValueError, match="team_names must be specified when all_teams is False"
+    ):
+        start_device_login(client_name="test", all_teams=False)
+
+
+def test_start_device_login_validation_all_teams_false_with_team_names(mock_post):
+    """Test that all_teams=False works when team_names is provided"""
+    mock_post("requests.post", [(200, MOCK_RESPONSE)])
+
+    # This should work without raising an error
+    result = start_device_login(
+        client_name="test", all_teams=False, team_names=["team1"]
+    )
+    assert result == MOCK_RESPONSE
